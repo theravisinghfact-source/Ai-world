@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI World - Ravi Ranjan</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">AI<span>World</span></div>
+    </header>
+
+    <main>
+        <section class="admin-panel">
+            <h2>Nayi AI Update Dalein</h2>
+            <input type="text" id="aiTitle" placeholder="Topic ka naam (e.g. ChatGPT 5)">
+            <textarea id="aiDesc" placeholder="AI se judi jankari yahan likhein..."></textarea>
+            <button onclick="saveData()" id="postBtn">Duniya ko Batayein</button>
+        </section>
+
+        <section class="news-feed">
+            <h2>Latest AI Updates</h2>
+            <div id="newsGrid" class="grid">
+                <p>Loading updates...</p>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // IMPORTANT: Apne Firebase Console se ye details yahan bhariye
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 1. Data Save Karne Ka Function
+        window.saveData = async () => {
+            const title = document.getElementById('aiTitle').value;
+            const desc = document.getElementById('aiDesc').value;
+
+            if(title == "" || desc == "") {
+                alert("Please dono boxes bhariye!");
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "ai_news"), {
+                    title: title,
+                    description: desc,
+                    timestamp: new Date()
+                });
+                alert("Update post ho gayi!");
+                location.reload();
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        // 2. Data Fetch Karke Dikhane Ka Function
+        const loadNews = async () => {
+            const q = query(collection(db, "ai_news"), orderBy("timestamp", "desc"));
+            const querySnapshot = await getDocs(q);
+            const grid = document.getElementById('newsGrid');
+            grid.innerHTML = "";
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                grid.innerHTML += `
+                    <div class="card">
+                        <h3>${data.title}</h3>
+                        <p>${data.description}</p>
+                        <span class="date">${new Date(data.timestamp.seconds * 1000).toLocaleDateString()}</span>
+                    </div>
+                `;
+            });
+        }
+
+        loadNews();
+    </script>
+</body>
+</html>
